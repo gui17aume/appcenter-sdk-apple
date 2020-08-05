@@ -9,6 +9,7 @@
 
 ## Build generated
 build/
+.build/
 DerivedData/
 AppCenter-SDK-Apple/
 Documentation/**/Generated
