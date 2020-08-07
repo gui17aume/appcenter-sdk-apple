@@ -27,9 +27,11 @@
 #import "MSErrorAttachmentLogInternal.h"
 #import "MSErrorLogFormatter.h"
 #import "MSErrorReportPrivate.h"
+#import "MSException.h"
 #import "MSHandledErrorLog.h"
 #import "MSLoggerInternal.h"
 #import "MSSessionContext.h"
+#import "MSStackFrame.h"
 #import "MSUserIdContext.h"
 #import "MSUtility+File.h"
 #import "MSWrapperCrashesHelper.h"
@@ -269,6 +271,25 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
 
 + (void)setDelegate:(_Nullable id<MSCrashesDelegate>)delegate {
   [[MSCrashes sharedInstance] setDelegate:delegate];
+}
+
++ (void)trackError:(NSError *)error
+{
+  // Get the call stack and remove the first item, which is the call to trackError:
+  NSArray *callStack = NSThread.callStackSymbols;
+  callStack = [callStack subarrayWithRange:NSMakeRange(1, callStack.count - 1)];
+  
+  [[MSCrashes sharedInstance] trackError:error callStack:callStack attachments:nil];
+}
+
++ (void)trackError:(NSError *)error
+       attachments:(nullable NSArray<MSErrorAttachmentLog *> *)attachments
+{
+  // Get the call stack and remove the first item, which is the call to trackError:properties:attachments:
+  NSArray *callStack = NSThread.callStackSymbols;
+  callStack = [callStack subarrayWithRange:NSMakeRange(1, callStack.count - 1)];
+  
+  [[MSCrashes sharedInstance] trackError:error callStack:callStack attachments:attachments];
 }
 
 #pragma mark - Service initialization
@@ -1317,6 +1338,29 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
 }
 
 #pragma mark - Handled exceptions
+
+- (void)trackError:(NSError *)error
+         callStack:(NSArray<MSStackFrame *> *)callStack
+       attachments:(nullable NSArray<MSErrorAttachmentLog *> *)attachments
+{
+  MSException *exception = [MSException new];
+  exception.type = error.domain;
+  exception.message = @(error.code).stringValue;
+  
+  if (callStack.count > 256) {
+    callStack = [callStack subarrayWithRange:NSMakeRange(0, 256)];
+  }
+
+  NSMutableArray *frames = [NSMutableArray new];
+  for (NSString *frameString in callStack) {
+    MSStackFrame *frame = [MSStackFrame new];
+    frame.code = frameString;
+    [frames addObject:frame];
+  }
+  exception.frames = frames.copy;
+
+  [self trackModelException:exception withProperties:error.userInfo withAttachments:attachments];
+}
 
 - (NSString *)trackModelException:(MSException *)exception
                    withProperties:(nullable NSDictionary<NSString *, NSString *> *)properties

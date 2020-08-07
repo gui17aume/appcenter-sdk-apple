@@ -5,6 +5,7 @@
 #import "MSServiceAbstract.h"
 
 @class MSCrashesDelegate;
+@class MSErrorAttachmentLog;
 
 /**
  * Custom block that handles the alert that prompts the user whether crash reports need to be processed or not.
@@ -167,5 +168,33 @@ typedef NS_ENUM(NSUInteger, MSUserConfirmation) {
  * @see MSUserConfirmation.
  */
 + (void)notifyWithUserConfirmation:(MSUserConfirmation)userConfirmation;
+
+///-----------------------------------------------------------------------------
+/// @name Handled errors
+///-----------------------------------------------------------------------------
+
+/**
+ * Track an error. The error domain, code and user info will be sent.
+ * The user info maximum item count = 20.
+ * The user info keys must be strings and cannot be empty, maximum allowed key length = 125.
+ * The user info values must be strings, maximum allowed value length = 125.
+ * Any key or value longer than the limit will be truncated.
+ *
+ * @param error An error.
+ */
++ (void)trackError:(nonnull NSError *)error;
+
+/**
+ * Track an error and add attachments. The error domain, code and user info will be sent.
+ * The user info maximum item count = 20.
+ * The user info keys must be strings and cannot be empty, maximum allowed key length = 125.
+ * The user info values must be strings, maximum allowed value length = 125.
+ * Any key or value longer than the limit will be truncated.
+ *
+ * @param error An error.
+ * @param attachments An array of attachments.
+ */
++ (void)trackError:(nonnull NSError *)error
+       attachments:(nullable NSArray<MSErrorAttachmentLog *> *)attachments;
 
 @end
