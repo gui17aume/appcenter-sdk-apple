@@ -277,7 +277,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
 {
   // Get the call stack and remove the first item, which is the call to trackError:
   NSArray *callStack = NSThread.callStackSymbols;
-  callStack = [callStack subarrayWithRange:NSMakeRange(1, callStack.count - 1)];
+  //callStack = [callStack subarrayWithRange:NSMakeRange(1, callStack.count - 1)];
   
   [[MSCrashes sharedInstance] trackError:error callStack:callStack attachments:nil];
 }
@@ -287,7 +287,7 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
 {
   // Get the call stack and remove the first item, which is the call to trackError:properties:attachments:
   NSArray *callStack = NSThread.callStackSymbols;
-  callStack = [callStack subarrayWithRange:NSMakeRange(1, callStack.count - 1)];
+  //callStack = [callStack subarrayWithRange:NSMakeRange(1, callStack.count - 1)];
   
   [[MSCrashes sharedInstance] trackError:error callStack:callStack attachments:attachments];
 }
@@ -1352,12 +1352,20 @@ __attribute__((noreturn)) static void uncaught_cxx_exception_handler(const MSCra
   }
 
   NSMutableArray *frames = [NSMutableArray new];
+  
+  MSStackFrame *firstFrame = [MSStackFrame new];
+  firstFrame.code = error.domain;
+  [frames addObject:firstFrame];
+  
   for (NSString *frameString in callStack) {
     MSStackFrame *frame = [MSStackFrame new];
     frame.code = frameString;
     [frames addObject:frame];
   }
+  
   exception.frames = frames.copy;
+
+  exception.stackTrace = [callStack componentsJoinedByString:@"\n"];
 
   [self trackModelException:exception withProperties:error.userInfo withAttachments:attachments];
 }
