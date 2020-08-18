@@ -101,6 +101,7 @@ static const char *safer_string_read(const char *string, const char *limit) {
  *  http://sealiesoftware.com/blog/archive/2008/09/22/objc_explain_So_you_crashed_in_objc_msgSend.html
  */
 static const char *findSEL(const char *imageName, NSString *imageUUID, uint64_t relativeAddress) {
+#if !TARGET_OS_MACCATALYST
   unsigned int images_count = _dyld_image_count();
   for (unsigned int i = 0; i < images_count; ++i) {
     intptr_t slide = _dyld_get_image_vmaddr_slide(i);
@@ -180,7 +181,7 @@ static const char *findSEL(const char *imageName, NSString *imageUUID, uint64_t 
     // Read the actual method name.
     return safer_string_read(target, limit);
   }
-
+#endif
   return NULL;
 }
 
